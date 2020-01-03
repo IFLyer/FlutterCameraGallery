@@ -5,6 +5,7 @@ import 'package:camera_gallery/page/camera_page.dart';
 import 'package:camera_gallery/page/preview_page.dart';
 import 'package:camera_gallery/provider/gallery_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 void main() => runApp(MyApp());
@@ -54,6 +55,16 @@ class Homepage extends StatelessWidget {
     }
   }
 
+  Future _getImageGallery(GalleryProvider galleryProvider) async {
+    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    if(image != null){
+      print("ini str" + image.path);
+      galleryProvider.addList(image.path);
+    }else{
+      print("kosong");
+    }
+  }
+
   _masterDialog(BuildContext context, GalleryProvider galleryProvider) async {
     return await showDialog(
         context: context,
@@ -74,6 +85,7 @@ class Homepage extends StatelessWidget {
               SimpleDialogOption(
                 onPressed: () {
                   Navigator.pop(context);
+                  _getImageGallery(galleryProvider);
                   // Navigator.of(context).push(MaterialPageRoute(
                   //     builder: (BuildContext context) => ViewKwhMeterPage()));
                 },
