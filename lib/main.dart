@@ -57,10 +57,10 @@ class Homepage extends StatelessWidget {
 
   Future _getImageGallery(GalleryProvider galleryProvider) async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
-    if(image != null){
+    if (image != null) {
       print("ini str" + image.path);
       galleryProvider.addList(image.path);
-    }else{
+    } else {
       print("kosong");
     }
   }
@@ -96,57 +96,120 @@ class Homepage extends StatelessWidget {
         });
   }
 
+  _cardGallery(
+      BuildContext context, int index, GalleryProvider galleryProvider) {
+    if (!galleryProvider.enableDelete) {
+      return Card(
+        elevation: 8,
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (BuildContext context) =>
+                    PreviewPage(imagePath: galleryProvider.list[index])));
+          },
+          onLongPress: () {
+            galleryProvider.setEnableDelete(true);
+          },
+          child: Hero(
+            tag: galleryProvider.list[index],
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: new Container(
+                decoration: new BoxDecoration(
+                  image: new DecorationImage(
+                    fit: BoxFit.cover,
+                    alignment: FractionalOffset.topCenter,
+                    image: new FileImage(
+                      File(galleryProvider.list[index]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Container(
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: new Container(
+                  decoration: new BoxDecoration(
+                    image: new DecorationImage(
+                      fit: BoxFit.cover,
+                      alignment: FractionalOffset.topCenter,
+                      image: new FileImage(
+                        File(galleryProvider.list[index]),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 0.0,
+              child: GestureDetector(
+                onTap: () {
+                  galleryProvider.deleteIndex(index);
+                },
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: CircleAvatar(
+                    radius: 14.0,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.close, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<GalleryProvider>(
       create: (_) => GalleryProvider(),
-      child: Scaffold(
-        floatingActionButton: Consumer<GalleryProvider>(
-          builder: (context, galleryProvider, _) => FloatingActionButton(
-            child: Icon(Icons.add),
-            onPressed: () {
-              _masterDialog(context, galleryProvider);
-            },
-          ),
-        ),
-        appBar: AppBar(
-          title: Text("Camera Gallery App"),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Consumer<GalleryProvider>(
-            builder: (context, galleryProvider, _) => GridView.builder(
+      child: Consumer<GalleryProvider>(
+        builder: (context, galleryProvider, _) => Scaffold(
+          floatingActionButton: galleryProvider.enableDelete
+              ? Container()
+              : FloatingActionButton(
+                  child: Icon(Icons.add),
+                  onPressed: () {
+                    _masterDialog(context, galleryProvider);
+                  },
+                ),
+          appBar: galleryProvider.enableDelete
+              ? AppBar(
+                  backgroundColor: Colors.red,
+                  title: Text("Delete"),
+                  actions: <Widget>[
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () {
+                        galleryProvider.setEnableDelete(false);
+                      },
+                    )
+                  ],
+                )
+              : AppBar(
+                  title: Text("Camera Gallery App"),
+                ),
+          body: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: GridView.builder(
                 itemCount: galleryProvider.list.length,
                 gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2),
                 itemBuilder: (BuildContext context, int index) {
-                  return Card(
-                    elevation: 8,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (BuildContext context) => PreviewPage(
-                                imagePath: galleryProvider.list[index])));
-                      },
-                      child: Hero(
-                        tag: galleryProvider.list[index],
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: new Container(
-                            decoration: new BoxDecoration(
-                              image: new DecorationImage(
-                                fit: BoxFit.fitWidth,
-                                alignment: FractionalOffset.topCenter,
-                                image: new FileImage(
-                                  File(galleryProvider.list[index]),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
+                  return _cardGallery(context, index, galleryProvider);
                 }),
           ),
         ),
